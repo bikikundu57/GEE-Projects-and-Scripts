@@ -1,0 +1,41 @@
+// Title: District-wise Mean Elevation of Bihar
+// Author: Biki Kundu
+// Date: August 2025
+// Description: This GEE script calculates district-wise mean elevation using SRTM DEM data.
+// How to Use: Copy the code into GEE Code Editor and run.
+
+
+// Step 1: Load SRTM DEM dataset (30m resolution)
+var srtm = ee.Image("USGS/SRTMGL1_003");
+
+// Step 2: Load Bihar boundary from GAUL dataset (2015 Level 1: State Level)
+var bihar = ee.FeatureCollection("FAO/GAUL_SIMPLIFIED_500m/2015/level1")
+              .filter(ee.Filter.eq('ADM1_NAME', 'Bihar'))
+              .filter(ee.Filter.eq('ADM0_NAME', 'India'));
+
+// Step 3: Clip the DEM to Bihar
+var srtm_bihar = srtm.clip(bihar);
+
+// Step 4: Visualization parameters
+var visParams = {
+  min: 0,
+  max: 300,
+  palette: ['blue', 'green', 'yellow', 'orange', 'red']
+};
+
+// Step 5: Add layers to the map
+Map.centerObject(bihar, 7);
+Map.addLayer(srtm_bihar, visParams, 'SRTM DEM - Bihar');
+Map.addLayer(bihar, {color: 'black'}, 'Bihar Boundary');
+
+// Step 6: Export the DEM to your Google Drive
+Export.image.toDrive({
+  image: srtm_bihar,
+  description: 'SRTM_Bihar_DEM',
+  folder: 'GEE_Exports',           // Folder in your Google Drive
+  fileNamePrefix: 'SRTM_Bihar_DEM',
+  region: bihar.geometry(),
+  scale: 30,
+  crs: 'EPSG:4326',
+  maxPixels: 1e13
+});
